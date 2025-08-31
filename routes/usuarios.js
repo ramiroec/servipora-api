@@ -40,4 +40,18 @@ router.delete('/:id', async (req, res) => {
   catch { res.status(500).json({ error: 'Error al eliminar' }); }
 });
 
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const { rows } = await pool.query('SELECT * FROM usuarios WHERE email=$1', [email]);
+    const usuario = rows[0];
+    if (!usuario || usuario.password !== password) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+    res.json(usuario);
+  } catch {
+    res.status(500).json({ error: 'Error al iniciar sesión' });
+  }
+});
+
 module.exports = router;
