@@ -13,14 +13,24 @@ router.get('/:id', async (req, res) => {
   catch { res.status(500).json({ error: 'Error al obtener' }); }
 });
 
-router.post('/', async (req, res) => {
-  const { nombre, email, password, telefono, direccion, ciudad_id, rol, estado, fecha_registro, foto, cedula, descripcion } = req.body;
-  try { const { rows } = await pool.query(
-    `INSERT INTO usuarios (nombre, email, password, telefono, direccion, ciudad_id, rol, estado, fecha_registro, foto, cedula, descripcion)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-     [nombre,email,password,telefono,direccion,ciudad_id,rol,estado,fecha_registro,foto,cedula,descripcion]
-  ); res.status(201).json(rows[0]); }
-  catch { res.status(500).json({ error: 'Error al crear' }); }
+router.post('/registro-cliente', async (req, res) => {
+  const { nombre, email, password, telefono, direccion, ciudad_id } = req.body;
+  try {
+    // Verificar si el email ya existe
+    const existe = await pool.query('SELECT id FROM usuarios WHERE email=$1', [email]);
+    if (existe.rows.length > 0) {
+      return res.status(400).json({ error: 'El correo ya está registrado' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO usuarios (nombre, email, password, telefono, direccion, ciudad_id, rol, estado, fecha_registro)
+       VALUES ($1,$2,$3,$4,$5,$6,'cliente','activo',NOW())
+       RETURNING *`,
+      [nombre, email, password, telefono, direccion, ciudad_id]
+    );
+    res.status(201).json(rows[0]);
+  } catch {
+    res.status(500).json({ error: 'Error al registrar cliente' });
+  }
 });
 
 router.put('/:id', async (req, res) => {
